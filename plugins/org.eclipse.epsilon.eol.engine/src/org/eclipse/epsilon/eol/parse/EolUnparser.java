@@ -28,7 +28,7 @@ public class EolUnparser implements IEolVisitor {
 		module.getImports().stream().forEach(i -> {i.accept(this); newline();});
 		module.getDeclaredModelDeclarations().stream().forEach(md -> {md.accept(this); newline();});
 		unparseMain();
-		module.getDeclaredOperations().stream().forEach(o -> {newline(); o.accept(this);});
+		module.getOperations().stream().forEach(o -> {newline(); o.accept(this);});
 		
 		return buffer.toString();
 	}
@@ -407,10 +407,12 @@ public class EolUnparser implements IEolVisitor {
 			space();
 		}
 		buffer.append(operation.getName() + "(");
+		if(operation.getFormalParameters()!=null && !(operation.getFormalParameters().isEmpty())) {
 		Iterator<Parameter> li = operation.getFormalParameters().iterator();
 		while (li.hasNext()) {
 			li.next().accept(this);
 			if (li.hasNext()) comma();
+		}
 		}
 		buffer.append(") ");
 		if (operation.getReturnTypeExpression() != null) {

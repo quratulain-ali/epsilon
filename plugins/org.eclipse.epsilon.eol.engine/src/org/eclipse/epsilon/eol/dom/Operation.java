@@ -10,6 +10,7 @@
 package org.eclipse.epsilon.eol.dom;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -304,7 +305,24 @@ public class Operation extends AnnotatableModuleElement {
 		this.returnTypeExpression = returnTypeExpression;
 	}
 	
+	public void setFormalParameters(Parameter parameter) {
+		if(formalParameters == null)
+			formalParameters =new ArrayList<Parameter>(Arrays.asList(parameter));
+		else
+			formalParameters.add(parameter);
+	}
+	
+	public void setFormalParameter() {
+			formalParameters =new ArrayList<Parameter>();
+	}
+	
 	public void accept(IEolVisitor visitor) {
 		visitor.visit(this);
+	}
+	
+	public void enableCache() {
+		if ((isCached = hasAnnotation("cached") && formalParameters.isEmpty()) == true) {
+			this.cache = Collections.synchronizedMap(new WeakHashMap<>());
+		}
 	}
 }

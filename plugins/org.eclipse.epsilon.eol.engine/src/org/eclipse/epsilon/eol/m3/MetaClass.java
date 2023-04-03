@@ -45,7 +45,7 @@ public class MetaClass extends MetaType {
 	
 	public StructuralFeature getStructuralFeature(String name) {
 		for (StructuralFeature structuralFeature : getAllStructuralFeatures()) {
-			if (structuralFeature.getName().equals(name)) {
+			if (structuralFeature.getName().equalsIgnoreCase(name)) {
 				return structuralFeature;
 			}
 		}

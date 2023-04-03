@@ -34,6 +34,7 @@ public class OperationCallExpression extends FeatureCallExpression {
 	
 	protected final ArrayList<Expression> parameterExpressions = new ArrayList<>(0);
 	protected boolean contextless;
+	public static long time;
 	
 	public OperationCallExpression() {
 		this(false);
@@ -82,6 +83,7 @@ public class OperationCallExpression extends FeatureCallExpression {
 	@Override
 	public Object execute(IEolContext context) throws EolRuntimeException {
 		Object targetObject;
+
 		String operationName = nameExpression.getName();
 		final ExecutorFactory executorFactory = context.getExecutorFactory();
 		
@@ -109,12 +111,56 @@ public class OperationCallExpression extends FeatureCallExpression {
 		
 		IModel owningModel = context.getModelRepository().getOwningModel(targetObject);
 		
+		ArrayList<Object> parameterValues = new ArrayList<>(parameterExpressions.size());
+		ArrayList<Class<?>> parameterTypes = new ArrayList<>(parameterExpressions.size());
+		for (Expression parameter : parameterExpressions) {
+			parameterValues.add(executorFactory.execute(parameter, context));
+		}
+		
+		Object[] parameterValuesArray = parameterValues.toArray();
+
+//		Operation o = (Operation) this.getData().get("exactMatch");
+//
+//		if (this.getData().get("method") != null) {
+//
+//			for (Object param : parameterValues) {
+//				parameterTypes.add(param.getClass());
+//			}
+//
+//			try {
+//				// Get contributor class from static analyser
+//				Class<?> c = Class.forName(this.getData().get("class").toString());
+//				if (c.getName().equals("org.eclipse.epsilon.eol.execute.operations.contributors.ReflectiveOperationContributor"));
+//				c = targetObject.getClass();
+//				
+//				Class<?>[] parameterTypesArray = parameterTypes.toArray(new Class[parameterTypes.size()]);
+//				
+//				// Get the exact matched method
+//				Method m = c.getMethod(this.getData().get("method").toString(), parameterTypesArray);
+//				
+//				return m.invoke(targetObject, parameterValuesArray);
+//			} 
+//			catch (NoSuchMethodException | SecurityException | ClassNotFoundException | IllegalAccessException
+//					| IllegalArgumentException | InvocationTargetException e) {
+//				e.printStackTrace();
+//			}
+//		}
+	
+//		if(o !=null && o.getBody().getStatements().size() != 0) {
+//			return o.execute(targetObject, parameterValues, context);
+//		}
+		
 		// Non-overridable operations
 		AbstractOperation operation = getAbstractOperation(targetObject, operationName, owningModel, context);
 		if (operation != null && !operation.isOverridable()) {
 			return operation.execute(targetObject, nameExpression, new ArrayList<Parameter>(0), parameterExpressions, context);
 		}
 		
+//		// Execute user-defined operation (if isArrow() == true)
+//		if (operation instanceof SimpleOperation) {
+//			return ((SimpleOperation) operation).execute(targetObject, parameterValues, context, nameExpression);
+//		}
+//		
 		// Operation contributor for model elements
 		OperationContributor operationContributor = null;
 		
@@ -142,15 +188,16 @@ public class OperationCallExpression extends FeatureCallExpression {
 				return wrap(objectMethod.execute(nameExpression, context, nameExpression)); 
 			}
 	
-			// Evaluate the parameters
-			ArrayList<Object> parameterValues = new ArrayList<>(parameterExpressions.size());
-			for (Expression parameter : parameterExpressions) {
-				parameterValues.add(executorFactory.execute(parameter, context));
-			}
+//			ArrayList<Object> parameterValues = new ArrayList<>(parameterExpressions.size());
+//			
+//			for (Expression parameter : parameterExpressions) {
+//				parameterValues.add(executorFactory.execute(parameter, context));
+//			}
 			
 			Object module = context.getModule();
 			// Execute user-defined operation (if isArrow() == false)
 			if (module instanceof IEolModule && !isArrow()) {
+//				System.out.println(operationName);
 				OperationList operations = ((IEolModule) module).getOperations();
 				Operation helper = operations.getOperation(targetObject, nameExpression, parameterValues, context);
 				if (helper != null) {
@@ -158,14 +205,14 @@ public class OperationCallExpression extends FeatureCallExpression {
 				}
 			}
 			
-			Object[] parameterValuesArray = parameterValues.toArray();
+//			Object[] parameterValuesArray = parameterValues.toArray();
 			
 			// Method contributors that use the evaluated parameters
 			if (operationContributor != null) {
 				// Try contributors that override the context's operation contributor registry
 				objectMethod = operationContributor
 					.findContributedMethodForEvaluatedParameters(targetObject, operationName, parameterValuesArray, context, true);
-			}
+			}      
 			
 			if (objectMethod == null) {
 				objectMethod = context.getOperationContributorRegistry()
@@ -185,7 +232,7 @@ public class OperationCallExpression extends FeatureCallExpression {
 			if (operation instanceof SimpleOperation) {
 				return ((SimpleOperation) operation).execute(targetObject, parameterValues, context, nameExpression);
 			}
-	
+//	
 			// Most likely a FirstOrderOperation or DynamicOperation
 			if (operation != null && targetObject != null && !parameterExpressions.isEmpty()) {
 				return operation.execute(targetObject, nameExpression, new ArrayList<>(0), parameterExpressions, context);
